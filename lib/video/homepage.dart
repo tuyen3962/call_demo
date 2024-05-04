@@ -1,6 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_application_2/test/signaling.dart';
+import 'package:flutter_application_2/main.dart';
+import 'package:flutter_application_2/service/fcm_service.dart';
+import 'package:flutter_application_2/service/firebase_database.dart';
+import 'package:flutter_application_2/video/signaling.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 
 class HomePage extends StatefulWidget {
@@ -14,7 +17,7 @@ class HomePageState extends State<HomePage> {
   String? userType;
   DateTime? compareDate;
   int i = 0;
-
+  final FirebaseDataSource firebaseDataSource = locator.get();
   //HomePageState(this.userType);
   Signaling signaling = Signaling();
   final RTCVideoRenderer _localRenderer = RTCVideoRenderer();
@@ -45,6 +48,11 @@ class HomePageState extends State<HomePage> {
         {
           roomId = await signaling.createRoom(_localRenderer);
           // textEditingController.text = roomId!;
+          final otherUser = await firebaseDataSource.getOtherUser();
+          if (otherUser != null) {
+            FcmService.instance.pushCallKitNotification(roomId ?? '',
+                receiverToken: otherUser['token']);
+          }
           print(
               '---------------------------------------------------------------------------3');
           setState(() {});

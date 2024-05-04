@@ -1,9 +1,15 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_application_2/main.dart';
+import 'package:flutter_application_2/service/firebase_database.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 
 typedef StreamStateCallback = void Function(MediaStream stream);
 
 class Signaling {
+  FirebaseDataSource firebaseDataSource = locator.get();
+
   Map<String, dynamic> configuration = {
     'iceServers': [
       {
@@ -30,10 +36,14 @@ class Signaling {
   String? currentRoomText;
   StreamStateCallback? onAddRemoteStream;
 
+  late StreamSubscription? _roomSubscription;
+  late StreamSubscription? _calleeCandidatesSubscription;
+  late StreamSubscription? _callerCandidatesSub;
+
   Future<String> createRoom(RTCVideoRenderer remoteRenderer) async {
     FirebaseFirestore db = FirebaseFirestore.instance;
     DocumentReference roomRef = db.collection('rooms').doc();
-    final activecallers = db.collection('ActiveCallers');
+    // final activecallers = db.collection('ActiveCallers');
 
     print('Create PeerConnection with configuration: $configuration');
 
@@ -88,9 +98,10 @@ class Signaling {
       'name': 'user_$aciveusercount',
       'start-on': DateTime.now()
     };
-    activecallers.add(acitvecallerjson);
+    firebaseDataSource.addActiveCaller(acitvecallerjson);
+
     // Listening for remote session description below
-    roomRef.snapshots().listen((snapshot) async {
+    _roomSubscription = roomRef.snapshots().listen((snapshot) async {
       print('Got updated room: ${snapshot.data()}');
 
       Map<String, dynamic> data = snapshot.data() as Map<String, dynamic>;
@@ -108,7 +119,8 @@ class Signaling {
     // Listening for remote session description above
 
     // Listen for remote Ice candidates below
-    roomRef.collection('calleeCandidates').snapshots().listen((snapshot) {
+    _calleeCandidatesSubscription =
+        roomRef.collection('calleeCandidates').snapshots().listen((snapshot) {
       snapshot.docChanges.forEach((change) {
         if (change.type == DocumentChangeType.added) {
           Map<String, dynamic> data = change.doc.data() as Map<String, dynamic>;
@@ -199,7 +211,8 @@ class Signaling {
       // Finished creating SDP answer
 
       // Listening for remote ICE candidates below
-      roomRef.collection('callerCandidates').snapshots().listen((snapshot) {
+      _callerCandidatesSub =
+          roomRef.collection('callerCandidates').snapshots().listen((snapshot) {
         snapshot.docChanges.forEach((document) {
           var data = document.doc.data() as Map<String, dynamic>;
           print(data);
@@ -251,7 +264,9 @@ class Signaling {
 
       await roomRef.delete();
     }
-
+    _roomSubscription?.cancel();
+    _calleeCandidatesSubscription?.cancel();
+    _callerCandidatesSub?.cancel();
     localStream!.dispose();
     remoteStream?.dispose();
   }

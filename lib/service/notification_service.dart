@@ -5,8 +5,10 @@ import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_application_2/main.dart';
 import 'package:flutter_application_2/service/callkit_event_handler.dart';
 import 'package:flutter_application_2/service/fcm_service.dart';
+import 'package:flutter_application_2/service/firebase_database.dart';
 import 'package:flutter_callkit_incoming/entities/android_params.dart';
 import 'package:flutter_callkit_incoming/entities/call_event.dart';
 import 'package:flutter_callkit_incoming/entities/call_kit_params.dart';
@@ -60,19 +62,11 @@ void onHandleDeclineCallEvent(CallEvent event) async {
 }
 
 class NotificationService {
-  static late final NotificationService? _instance;
-  static NotificationService get instance {
-    _instance ??= NotificationService._();
-    return _instance!;
-  }
-
   static FirebaseMessaging _messaging = FirebaseMessaging.instance;
-
+  final FirebaseDataSource firebaseDataSource;
   String? fcmToken;
 
-  NotificationService._();
-
-  factory NotificationService() => instance;
+  NotificationService({required this.firebaseDataSource});
 
   Future<void> onHandleCallKitNotification() async {
     print('onHandleCallKitNotification');
@@ -92,11 +86,12 @@ class NotificationService {
 
   Future<void> init() async {
     var settings = await _requestPermission();
+    subscribeOnForegroundMessage();
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized ||
         settings.authorizationStatus == AuthorizationStatus.provisional) {
       fcmToken = await getToken();
-
+      firebaseDataSource.registerUser(userId: userId, fcmToken: fcmToken ?? '');
       await _configFirebaseMessaging();
     }
   }
@@ -111,12 +106,21 @@ class NotificationService {
     return _messaging.getToken();
   }
 
-  Future<RemoteMessage?> initialMessage() async {
-    return _messaging.getInitialMessage();
-  }
-
   Future<void> _configFirebaseMessaging() async {
     await _messaging.setAutoInitEnabled(true);
+  }
+
+  void subscribeOnForegroundMessage() {
+    FirebaseMessaging.onMessage.listen((message) {
+      /// Xử lý phần noti của cuộc gọi
+      print('subscribeOnForegroundMessage $message');
+      if (message.data['action'] == NOTIFICATION_ACTION.VIDEO_CALL) {
+        showCallkitIncoming(message);
+      } else if (message.data["action"] == NOTIFICATION_ACTION.END_CALL) {
+        final data = jsonDecode(message.data['data']) as Map;
+        onRejectCall?.call(data);
+      }
+    });
   }
 
   Future<NotificationSettings> _requestPermission() async {

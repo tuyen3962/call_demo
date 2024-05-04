@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_application_2/constant/app_constant.dart';
+import 'package:flutter_application_2/main.dart';
 import 'package:flutter_application_2/service/notification_service.dart';
 
 class FcmService {
@@ -9,11 +10,15 @@ class FcmService {
 
   static final FcmService instance = FcmService._();
 
-  void pushCallKitNotification(String channelId, {String? receiverToken}) {
+  void pushCallKitNotification(String roomId, {String? receiverToken}) {
     pushNotification(
         receiverToken: receiverToken,
         action: NOTIFICATION_ACTION.VIDEO_CALL,
-        data: {"channel_id": channelId, "sender_token": 'fcmToken'});
+        data: {
+          "roomId": roomId,
+          "sender_id": userId,
+          "sender_token": locator.get<NotificationService>().fcmToken
+        });
   }
 
   Future<void> pushNotification({
