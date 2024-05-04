@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+   <meta charset="UTF-8">
+   <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+
+   <title>THAY SỐ CẢI VẬN - SIM PHONG THỦY</title>
+   <meta name="title" content="THAY SỐ CẢI VẬN - SIM PHONG THỦY" />
+   <meta name="description" content="Thay số cải vận với sim phong thủy" />
+
+
+   <link rel="stylesheet" type="text/css"
+      href="https://thaysocaivan.com/assets/vendors/bootstrap/css/bootstrap.min.css">
+   <link rel="stylesheet" href="https://thaysocaivan.com/assets/css/style.css" />
+   <style>
+      .tpoloading {
+         z-index: 99999999999999;
+         background-image: url("https://thaysocaivan.com/assets/images/loading.gif");
+         background-size: 330px 220px;
+         background-position: center;
+         background-repeat: no-repeat;
+         width: 100%;
+         height: 100%;
+         position: fixed;
+         top: 0%;
+         left: 0%;
+         background-color: #000c;
+      }
+   </style>
+</head>
+
+<body style="background-color: black;">
+   <div class="info"></div>
+   <div id="div_filter" style="display: none;padding-top: 5px;">
+   </div>
+   <div id="scrollsChartSection" data-bs-spy="scroll" data-bs-target="#navbar-chart-section" data-bs-offset="0"
+      class="scrollspy-example" tabindex="0">
+      <div class="group-chart" id="id_chart" style="padding-top: 5px !important;">
+         <div class="container-fluid">
+            <div class="row justify-content-center">
+               <div class="col-lg-8" id="scrollsChartSection_line">
+                  <h4 class="header-dashboard" id="h_title" style="display: none;">Biểu đồ luận giải...</h4>
+                  <div class="row justify-content-center">
+                     <div class="col-12 position-relative pt-3">
+                        <canvas id="chart-explain" height="400" width="800"></canvas>
+                        <canvas id="chart-explain-mobile" height="800" width="800"></canvas>
+                        <div class="chart-label px-3">
+                           <div class="row flex-nowrap justify-content-between">
+                              <div class="col text-nowrap"><img src="../assets/images/icons/ic-son.svg" alt="">
+                                 <p style="color: green;font-weight: bold;">CON TRAI</p>
+                              </div>
+                              <div class="col text-nowrap"><img src="../assets/images/icons/ic-daughter.svg" alt="">
+                                 <p style="color: green;font-weight: bold;">CON GÁI</p>
+                              </div>
+                              <div class="col text-nowrap"><img src="../assets/images/icons/ic-money.svg" alt="">
+                                 <p style="color: yellow;font-weight: bold;">TIỀN TÀI</p>
+                              </div>
+                              <div class="col text-nowrap"><img src="../assets/images/icons/ic-marriage.svg" alt="">
+                                 <p style="color: green;font-weight: bold;">HÔN NHÂN</p>
+                              </div>
+                              <div class="col text-nowrap"><img src="../assets/images/icons/ic-law.svg" alt="">
+                                 <p style="color: green;font-weight: bold;">PHÁP LUẬT</p>
+                              </div>
+                              <div class="col text-nowrap"><img src="../assets/images/icons/ic-career.svg" alt="">
+                                 <p style="color: green;font-weight: bold;">CÔNG DANH</p>
+                              </div>
+                              <div class="col text-nowrap"><img src="../assets/images/icons/ic-father.svg" alt="">
+                                 <p style="color: green;font-weight: bold;">CHA</p>
+                              </div>
+                              <div class="col text-nowrap"><img src="../assets/images/icons/ic-mother.svg" alt="">
+                                 <p style="color: green;font-weight: bold;">MẸ</p>
+                              </div>
+                              <div class="col text-nowrap"><img src="../assets/images/icons/ic-healthy.svg" alt="">
+                                 <p style="color: green;font-weight: bold;">SỨC KHỎE</p>
+                              </div>
+                              <div class="col text-nowrap"><img src="../assets/images/icons/ic-sibling.svg" alt="">
+                                 <p style="color: green;font-weight: bold;">ANH EM</p>
+                              </div>
+                           </div>
+                        </div>
+                     </div>
+                     <div class="col-12 col-sm-8 col-xl-6">
+                        <div
+                           class="alert bg-theme text-white text-center fst-italic py-1 rounded-4 alert-changing-fortune"
+                           role="alert">
+                           <a onclick="bind_chart_by_click()"><small id="sm_so_luot_xem_con_lai">Quý khách còn 0 lượt
+                                 xem.</small></a>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </div>
+   </div>
+
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/chart.js@3.0.0/dist/chart.min.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+   <script>
+      let url = 'https://apiuattscv.s-tech.com.vn';
+      let router_search_thay_doi_cai_van = '/api/trang_chu/chart_detail_by_sim_by_cus';
+      let router_decode = '/api/trang_chu/decodebase64string';
+      var kh_token = "";
+      var queryParams = {};
+      var _man_hinh_ngang;
+      $(document).ready(function () {
+         try {
+            // test manual
+            //bind_chart_flutter('eyJob190ZW4iOiJ0aCIsImdpb2lfdGluaCI6MSwibmdheV9zaW5oX2R1b25nX2xpY2giOiIwMi8wNS8yMDIzIiwiZ2lvX3NpbmgiOiIiLCJzaW1fY3UiOiIiLCJuaGFfbWFuZyI6IkNo4buNbiIsInRoYW5oX3Bob19zaW5oIjowLCJ0aGFuaF9waG9fbyI6MCwic2ltX2NhaV92YW4iOiIwOTA4MTg1MjUyIiwia2hfdG9rZW4iOiJsU3M3U2pxSDlsUGV4K2w2aXhKNWpnPT0iLCJzb19sdW90X3hlbV9jb25fbGFpIjo5NDM2LCJjaGFydF9saW5lIjpbeyJsb2FpIjoiSGnhu4duIHThuqFpIiwiY29udHJhaSI6LTUyLCJjb25nYWkiOi03NCwidGllbnRhaSI6LTc2LCJob25uaGFuIjotNDQsInBoYXBsdWF0IjotNzAsImNvbmdkYW5oIjo5MiwiY2hhIjotOTEsIm1lIjo0NDcsInN1Y2tob2UiOi03MiwiYW5oZW0iOi02MH0seyJsb2FpIjoiQ+G6o2kgduG6rW4oMDkwODE4NTI1MikiLCJjb250cmFpIjotMjgsImNvbmdhaSI6LTM0LCJ0aWVudGFpIjotNTgsImhvbm5oYW4iOi01MCwicGhhcGx1YXQiOjEzLCJjb25nZGFuaCI6NTQsImNoYSI6MzEsIm1lIjoxNjcsInN1Y2tob2UiOi00OSwiYW5oZW0iOi00Nn1dfQ==');
+            //bind_chart_flutter('eyJob190ZW4iOiJ0aCIsImdpb2lfdGluaCI6MSwibmdheV9zaW5oX2R1b25nX2xpY2giOiIwMi8wNS8yMDIzIiwiZ2lvX3NpbmgiOiIiLCJzaW1fY3UiOiIiLCJuaGFfbWFuZyI6IkNo4buNbiIsInRoYW5oX3Bob19zaW5oIjowLCJ0aGFuaF9waG9fbyI6MCwic2ltX2NhaV92YW4iOiIwOTA4MTg1MjUyIiwia2hfdG9rZW4iOiJsU3M3U2pxSDlsUGV4K2w2aXhKNWpnPT0iLCJzb19sdW90X3hlbV9jb25fbGFpIjo5NDM2LCJjaGFydF9saW5lIjpbeyJsb2FpIjoiSGnhu4duIHThuqFpIiwiY29udHJhaSI6LTUyLCJjb25nYWkiOi03NCwidGllbnRhaSI6LTc2LCJob25uaGFuIjotNDQsInBoYXBsdWF0IjotNzAsImNvbmdkYW5oIjo5MiwiY2hhIjotOTEsIm1lIjo0NDcsInN1Y2tob2UiOi0xMiwiYW5oZW0iOi0xMH0seyJsb2FpIjoiQ+G6o2kgduG6rW4oMDkwODE4NTI1MikiLCJjb250cmFpIjotMTgsImNvbmdhaSI6LTE0LCJ0aWVudGFpIjotMTgsImhvbm5oYW4iOi01MCwicGhhcGx1YXQiOjEzLCJjb25nZGFuaCI6MTQsImNoYSI6MTEsIm1lIjoxNywic3Vja2hvZSI6LTE5LCJhbmhlbSI6LTE2fV19');
+            bind_chart_flutter('eyJob190ZW4iOiJ0aCIsImdpb2lfdGluaCI6MSwibmdheV9zaW5oX2R1b25nX2xpY2giOiIwMi8wNS8yMDIzIiwiZ2lvX3NpbmgiOiIiLCJzaW1fY3UiOiIiLCJuaGFfbWFuZyI6IkNo4buNbiIsInRoYW5oX3Bob19zaW5oIjowLCJ0aGFuaF9waG9fbyI6MCwic2ltX2NhaV92YW4iOiIwOTA4MTg1MjUyIiwia2hfdG9rZW4iOiJsU3M3U2pxSDlsUGV4K2w2aXhKNWpnPT0iLCJzb19sdW90X3hlbV9jb25fbGFpIjo5NDM2LCJjaGFydF9saW5lIjpbeyJsb2FpIjoiSGnhu4duIHThuqFpIiwiY29udHJhaSI6LTUyLCJjb25nYWkiOi03NCwidGllbnRhaSI6LTc2LCJob25uaGFuIjotNDQsInBoYXBsdWF0IjotNDAsImNvbmdkYW5oIjo0MiwiY2hhIjotNDEsIm1lIjo0Nywic3Vja2hvZSI6LTQyLCJhbmhlbSI6LTEwfSx7ImxvYWkiOiJD4bqjaSB24bqtbigwOTA4MTg1MjUyKSIsImNvbnRyYWkiOi0xOCwiY29uZ2FpIjotMzQsInRpZW50YWkiOi0zOCwiaG9ubmhhbiI6LTMwLCJwaGFwbHVhdCI6MTMsImNvbmdkYW5oIjozNCwiY2hhIjozMSwibWUiOjM3LCJzdWNraG9lIjotMzksImFuaGVtIjotMzZ9XX0=');
+         } catch (error) {
+            console.log(JSON.stringify(error));
+         }
+
+      });
+      var _json_object = {};
+      function bind_chart_flutter(data_encode) {
+         try {
+            console.log('bind_chart_flutter-1');
+            console.log(data_encode);
+
+            callApi(router_decode, 'POST', { base64EncodedString: data_encode }, null, function (response) {
+               if (response.result_code === '000') {
+                  const jsonObject = response.data;
+                  _json_object = jsonObject;
+                  console.log('webview_json');
+                  console.log(JSON.stringify(jsonObject));
+                  console.log('bind_chart_flutter-2');
+
+                  kh_token = jsonObject.kh_token;
+                  _man_hinh_ngang = 1;// jsonObject.man_hinh_ngang;
+
+                  if (_man_hinh_ngang) {
+                     $('#div_filter').show();
+                  } else {
+                     $('#div_filter').hide();
+                     $('#h_title').hide();
+                  }
+                  console.log('bind_chart_flutter-3');
+                  queryParams = {sim_cu: jsonObject.sim_cu,im_cai_van: jsonObject.sim_cai_van, chart_mobile: 1
+                  };
+
+                  var chart_line = jsonObject.chart_line;
+                  var so_luot_xem_con_lai = jsonObject.so_luot_xem_con_lai;
+                  console.log('bind_chart_flutter-4');
+                  bind_chart_by_data(chart_line, so_luot_xem_con_lai);
+                  console.log('bind_chart_flutter-5');
+               }
+               else {
+                  alert(response.result_msg);
+               }
+            }, function (xhr, status, error) {
+            });
+
+            //const decodedString = decodeUnicode(data_encode);
+
+         } catch (error) {
+            console.log('lỗi flutter');
+         }
+
+      }
+
+      function callApi(router, method = 'POST', queryParams = {}, body = null, successCallback, errorCallback) {
+         const queryString = new URLSearchParams(queryParams).toString();
+         var url_full = `${url}${router}?${queryString}`;
+         //console.log(url_full);
+         let headers = { kh_token: '' };
+         if (kh_token)
+            headers.kh_token = kh_token;
+         let platform = "webview";
+         if (platform)
+            headers.platform_tscv = platform;
+
+         let page_current = "thay-so-cai-van-mobile";
+         if (page_current)
+            headers.page_current = page_current;
+
+         headers.first_access = 1;
+         try {
+            $('.info').html('<div class="tpoloading"></div>');
+            $.ajax({
+               url: url_full,
+               method: method,
+               contentType: 'application/json',
+               data: body ? JSON.stringify(body) : null,
+               timeout: 30000,
+               success: successCallback,
+               error: errorCallback,
+               headers: headers,
+               dataType: 'json',
+               complete: function () {
+                  $('.tpoloading').hide();
+               }
+            });
+         } catch (error) {
+            console.log(error);
+            if (typeof errorCallback === 'function') {
+               errorCallback(null, 'Exception', error.message);
+            } else {
+               console.error('Exception Error:', error.message);
+            }
+         }
+      }
+     
+      function bind_chart_by_data(chart_line, so_luot_xem_con_lai) {
+         let array_hien_tai = [];
+         let array_cai_van = [];
+         console.log(`chart_line.length:${chart_line.length}`);
+         try {
+            if (chart_line.length > 0) {
+               let hien_tai = chart_line[0];
+               array_hien_tai = [hien_tai.contrai, hien_tai.congai, hien_tai.tientai, hien_tai.honnhan, hien_tai.phapluat, hien_tai.congdanh, hien_tai.cha, hien_tai.me, hien_tai.suckhoe, hien_tai.anhem];
+            }
+            if (chart_line.length === 2) {
+               let cai_van = chart_line[1];
+               array_cai_van = [cai_van.contrai, cai_van.congai, cai_van.tientai, cai_van.honnhan, cai_van.phapluat, cai_van.congdanh, cai_van.cha, cai_van.me, cai_van.suckhoe, cai_van.anhem];
+            }
+
+            let data = {
+               array_hien_tai: array_hien_tai,
+               array_cai_van: array_cai_van,
+               array_explainModal: [],
+               sim_cu: (queryParams.sim_cu != null && queryParams.sim_cu != "") ? queryParams.sim_cu : 'Hiện tại',
+               sim_cai_van: queryParams.sim_cai_van
+            };
+            console.log('Chart step 1');
+            console.log(data);
+            if (queryParams.sim_cai_van === '') {
+               chartExplain(data.sim_cu, array_hien_tai);
+            }
+            else {
+               chart2Explain(data.sim_cu, data.array_hien_tai, data.sim_cai_van, data.array_cai_van);
+            }
+            var element = document.getElementById("scrollsChartSection_line");
+            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            $('#sm_so_luot_xem_con_lai').text("Quý khách còn " + so_luot_xem_con_lai + " lượt xem.");
+         } catch (error) {
+            console.log(JSON.stringify(error));
+         }
+
+      }
+
+
+      function chartExplain(lblChart, dataChart) {
+         if ($("#scrollsChartSection").length) {
+            var ctx = document.getElementById("chart-explain").getContext('2d');
+            function someAsyncFunction(temp) {
+               if (temp) {
+                  temp.destroy();
+               }
+            }
+            async function createChartExplain() {
+               try {
+                  await someAsyncFunction(window.chartEx);
+                  window.chartEx = new Chart(ctx, {
+                     plugins: [ChartDataLabels],
+                     type: 'line',
+                     data: {
+                        labels: ["CON TRAI", "CON GÁI", "TIỀN TÀI", "HÔN NHÂN", "PHÁP LUẬT", "CÔNG DANH", "CHA", "MẸ", "SỨC KHỎE", "ANH EM"],
+                        datasets: [
+                           {
+                              label: lblChart,
+                              data: dataChart,//[10, -19, 69, 84, -23, -40, -13, -24, -70, -80],
+                              borderColor: "rgba(198,25,20, 1)",
+                              backgroundColor: "rgba(198,25,20, 0.3)",
+                              fill: 'start',
+                              tension: 0.5,
+                              pointStrokeColor: "#C61914",
+                              pointBackgroundColor: "#C61914",
+                              pointBorderWidth: 1.5,
+                              datalabels: {
+                                 labels: {
+                                    index: {
+                                       align: 'end',
+                                       anchor: 'end',
+                                       color: "#ff0700",
+                                       font: {
+                                          weight: 'bold',
+                                          size: 13
+                                       },
+                                       formatter: function (value, context) {
+                                          return percentage = value + '%';
+                                       },
+                                       padding: 1,
+                                    },
+                                 }
+                              }
+                           }
+                        ]
+                     },
+
+                     options: {
+                        responsive: true,
+                        plugins: {
+                           filler: {
+                              propagate: true
+                           },
+                           legend: {
+                              display: true,
+                              position: 'bottom',
+                              labels: {
+                                 padding: 60,
+                                 usePointStyle: true,
+                                 boxWidth: 6,
+                                 font: {
+                                    family: "Roboto",
+                                    size: 15,
+                                    weight: 'bold',
+                                    color: "#000000",
+                                 }
+                              }
+                           }
+                        },
+                        layout: {
+                           padding: 13
+                        },
+                        scales: {
+                           x: {
+                              grid: {
+                                 borderColor: 'grey',
+                                 tickColor: 'grey',
+                                 color: 'rgba(255, 255, 255, 0.07)'
+                              },
+                              ticks: {
+                                 display: false,
+                                 font: {
+                                    family: "Roboto",
+                                    size: 12,
+                                    weight: 500,
+                                    color: "#000000",
+                                 }
+                              }
+                           },
+                           y: {
+                              grid: {
+                                 borderColor: 'grey',
+                                 tickColor: 'grey',
+                                 color: 'rgba(255, 255, 255, 0.07)'
+                              },
+                              ticks: {
+                                 font: {
+                                    family: "Roboto",
+                                    size: 12,
+                                    weight: 500,
+                                    color: "#000000",
+                                 }
+                              },
+                           }
+                        },
+                     }
+                  });
+               } catch (error) {
+                  console.log(JSON.stringify(error));
+               }
+            };
+
+            var ctxMobile = document.getElementById("chart-explain-mobile").getContext('2d');
+            async function createChartExplainMobile() {
+               try {
+                  await someAsyncFunction(window.chartExplainMobile);
+                  window.chartExplainMobile = new Chart(ctxMobile, {
+                     plugins: [ChartDataLabels],
+                     type: 'line',
+                     data: {
+                        labels: ["CON TRAI", "CON GÁI", "TIỀN TÀI", "HÔN NHÂN", "PHÁP LUẬT", "CÔNG DANH", "CHA", "MẸ", "SỨC KHỎE", "ANH EM"],
+                        datasets: [
+                           {
+                              label: lblChart,
+                              data: dataChart,
+                              borderColor: "rgba(198,25,20, 1)",
+                              backgroundColor: "rgba(198,25,20, 0.3)",
+                              fill: 'start',
+                              tension: 0.5,
+                              pointStrokeColor: "#C61914",
+                              pointBackgroundColor: "#C61914",
+                              pointBorderWidth: 1,
+                              datalabels: {
+                                 labels: {
+                                    index: {
+                                       align: 'end',
+                                       anchor: 'end',
+                                       color: "#ff0700",
+                                       font: {
+                                          weight: 'bold',
+                                          size: 9
+                                       },
+                                       formatter: function (value, context) {
+                                          return percentage = value + '%      ';
+                                       },
+                                       padding: 4,
+                                    },
+                                 }
+                              }
+                           }]
+                     },
+
+                     options: {
+                        responsive: true,
+                        plugins: {
+                           filler: {
+                              propagate: true
+                           },
+                           legend: {
+                              display: true,
+                              position: 'bottom',
+                              labels: {
+                                 padding: 45,
+                                 usePointStyle: true,
+                                 boxWidth: 6,
+                                 font: {
+                                    family: "Roboto",
+                                    size: 12,
+                                    weight: 'bold',
+                                    color: "#000000",
+                                 }
+                              }
+                           }
+                        },
+                        scales: {
+                           x: {
+                              grid: {
+                                 borderColor: 'grey',
+                                 tickColor: 'grey',
+                                 color: 'rgba(255, 255, 255, 0.07)'
+                              },
+                              ticks: {
+                                 display: false,
+                                 font: {
+                                    family: "Roboto",
+                                    size: 10,
+                                    weight: 500,
+                                    color: "#fff",
+                                 }
+                              }
+                           },
+                           y: {
+                              grid: {
+                                 borderColor: 'grey',
+                                 tickColor: 'grey',
+                                 color: 'rgba(255, 255, 255, 0.07)'
+                              },
+                              ticks: {
+                                 font: {
+                                    family: "Roboto",
+                                    size: 10,
+                                    weight: 500,
+                                    color: "#fff",
+                                 }
+                              },
+                           }
+                        },
+                     }
+                  });
+               } catch (error) {
+                  console.log(JSON.stringify(error));
+               }
+
+            };
+            //chart bieu do luan giai hiển thị trên desktop
+            if ($("#chart-explain").length) {
+               createChartExplain();
+            }
+            //chart bieu do luan giai hiển thị trên mobile
+            if ($("#chart-explain-mobile").length) {
+               createChartExplainMobile();
+            }
+         }
+      }
+      function chart2Explain(lblChart1, dataChart1, lblChart2, dataChart2) {
+         if ($("#scrollsChartSection").length) {
+            var ctx = document.getElementById("chart-explain").getContext('2d');
+            function someAsyncFunction(temp) {
+               if (temp) {
+                  temp.destroy();
+               }
+            }
+            async function createChartExplain() {
+               try {
+                  if (window.chartEx) {
+                     window.chartEx.destroy();
+                  }
+                  window.chartEx = new Chart(ctx, {
+                     plugins: [ChartDataLabels],
+                     type: 'line',
+                     data: {
+                        labels: ["CON TRAI", "CON GÁI", "TIỀN TÀI", "HÔN NHÂN", "PHÁP LUẬT", "CÔNG DANH", "CHA", "MẸ", "SỨC KHỎE", "ANH EM"],
+                        datasets: [
+                           {
+                              label: lblChart1,
+                              data: dataChart1,//[10, -19, 69, 84, -23, -40, -13, -24, -70, -80],
+                              borderColor: "rgba(198,25,20, 1)",
+                              backgroundColor: "rgba(198,25,20, 0.3)",
+                              fill: 'start',
+                              tension: 0.5,
+                              pointStrokeColor: "#C61914",
+                              pointBackgroundColor: "#C61914",
+                              pointBorderWidth: 1.5,
+                              datalabels: {
+                                 labels: {
+                                    index: {
+                                       align: 'end',
+                                       anchor: 'end',
+                                       color: "#ff0700",
+                                       font: {
+                                          weight: 'bold',
+                                          size: 13
+                                       },
+                                       formatter: function (value, context) {
+                                          return percentage = value + '%';
+                                       },
+                                       padding: 1,
+                                    },
+                                 }
+                              }
+                           },
+                           {
+                              // label: '04345345345',
+                              // data: [60, 44, 125, 32, 9, 20, -40, 23, -40, -30],
+                              label: lblChart2,
+                              data: dataChart2,//[60, 44, 125, 32, 9, 20, -40, 23, -40, -30],
+                              borderColor: "rgba(0,83,206, 1)",
+                              backgroundColor: "rgba(0,83,206, 0.3)",
+                              fill: 'start',
+                              tension: 0.5,
+                              pointStrokeColor: "#004ab9",
+                              pointBackgroundColor: "#004ab9",
+                              pointBorderWidth: 1.5,
+                              datalabels: {
+                                 labels: {
+                                    index: {
+                                       align: 'end',
+                                       anchor: 'end',
+                                       color: "#0b6dff",
+                                       font: {
+                                          weight: 'bold',
+                                          size: 13
+                                       },
+                                       formatter: function (value, context) {
+                                          return percentage = value + '%';
+                                       },
+                                       padding: 1,
+                                    },
+                                 }
+                              }
+                           }
+                        ]
+                     },
+
+                     options: {
+                        responsive: true,
+                        plugins: {
+                           filler: {
+                              propagate: true
+                           },
+                           legend: {
+                              display: true,
+                              position: 'bottom',
+                              labels: {
+                                 padding: 60,
+                                 usePointStyle: true,
+                                 boxWidth: 6,
+                                 font: {
+                                    family: "Roboto",
+                                    size: 15,
+                                    weight: 'bold',
+                                    color: "#000000",
+                                 }
+                              }
+                           }
+                        },
+                        layout: {
+                           padding: 13
+                        },
+                        scales: {
+                           x: {
+                              grid: {
+                                 borderColor: 'grey',
+                                 tickColor: 'grey',
+                                 color: 'rgba(255, 255, 255, 0.07)'
+                              },
+                              ticks: {
+                                 display: false,
+                                 font: {
+                                    family: "Roboto",
+                                    size: 12,
+                                    weight: 500,
+                                    color: "#fff",
+                                 }
+                              }
+                           },
+                           y: {
+                              grid: {
+                                 borderColor: 'grey',
+                                 tickColor: 'grey',
+                                 color: 'rgba(255, 255, 255, 0.07)'
+                              },
+                              ticks: {
+                                 font: {
+                                    family: "Roboto",
+                                    size: 12,
+                                    weight: 500,
+                                    color: "#000000",
+                                 }
+                              },
+                           }
+                        },
+                     }
+                  });
+               } catch (error) {
+                  console.log(JSON.stringify(error));
+               }
+            };
+
+            var ctxMobile = document.getElementById("chart-explain-mobile").getContext('2d');
+            async function createChartExplainMobile() {
+               try {
+                  await someAsyncFunction(window.chartExplainMobile);
+                  window.chartExplainMobile = new Chart(ctxMobile, {
+                     plugins: [ChartDataLabels],
+                     type: 'line',
+                     data: {
+                        labels: ["CON TRAI", "CON GÁI", "TIỀN TÀI", "HÔN NHÂN", "PHÁP LUẬT", "CÔNG DANH", "CHA", "MẸ", "SỨC KHỎE", "ANH EM"],
+                        datasets: [
+                           {
+                              label: lblChart1,
+                              data: dataChart1,
+                              borderColor: "rgba(198,25,20, 1)",
+                              backgroundColor: "rgba(198,25,20, 0.3)",
+                              fill: 'start',
+                              tension: 0.5,
+                              pointStrokeColor: "#C61914",
+                              pointBackgroundColor: "#C61914",
+                              pointBorderWidth: 1,
+                              datalabels: {
+                                 labels: {
+                                    index: {
+                                       align: 'end',
+                                       anchor: 'end',
+                                       color: "#ff0700",
+                                       font: {
+                                          weight: 'bold',
+                                          size: 9
+                                       },
+                                       formatter: function (value, context) {
+                                          return percentage = value + '%      ';
+                                       },
+                                       padding: 4,
+                                    },
+                                 }
+                              }
+                           },
+                           {
+                              // label: '04345345345',
+                              // data: [60, 44, 125, 32, 9, 20, -40, 23, -40, -30],
+                              label: lblChart2,
+                              data: dataChart2,//[60, 44, 125, 32, 9, 20, -40, 23, -40, -30],
+                              borderColor: "rgba(0,83,206, 1)",
+                              backgroundColor: "rgba(0,83,206, 0.3)",
+                              fill: 'start',
+                              tension: 0.5,
+                              pointStrokeColor: "#004ab9",
+                              pointBackgroundColor: "#004ab9",
+                              pointBorderWidth: 1,
+                              datalabels: {
+                                 labels: {
+                                    index: {
+                                       align: 'end',
+                                       anchor: 'end',
+                                       color: "#0b6dff",
+                                       font: {
+                                          weight: 'bold',
+                                          size: 13
+                                       },
+                                       formatter: function (value, context) {
+                                          return percentage = value + '%';
+                                       },
+                                       padding: 1,
+                                    },
+                                 }
+                              }
+                           }]
+                     },
+
+                     options: {
+                        responsive: true,
+                        plugins: {
+                           filler: {
+                              propagate: true
+                           },
+                           legend: {
+                              display: true,
+                              position: 'bottom',
+                              labels: {
+                                 padding: 45,
+                                 usePointStyle: true,
+                                 boxWidth: 6,
+                                 font: {
+                                    family: "Roboto",
+                                    size: 12,
+                                    weight: 'bold',
+                                    color: "#fff",
+                                 }
+                              }
+                           }
+                        },
+                        scales: {
+                           x: {
+                              grid: {
+                                 borderColor: 'grey',
+                                 tickColor: 'grey',
+                                 color: 'rgba(255, 255, 255, 0.07)'
+                              },
+                              ticks: {
+                                 display: false,
+                                 font: {
+                                    family: "Roboto",
+                                    size: 10,
+                                    weight: 500,
+                                    color: "#fff",
+                                 }
+                              }
+                           },
+                           y: {
+                              grid: {
+                                 borderColor: 'grey',
+                                 tickColor: 'grey',
+                                 color: 'rgba(255, 255, 255, 0.07)'
+                              },
+                              ticks: {
+                                 font: {
+                                    family: "Roboto",
+                                    size: 10,
+                                    weight: 500,
+                                    color: "#fff",
+                                 }
+                              },
+                           }
+                        },
+                     }
+                  });
+               } catch (error) {
+                  console.log(JSON.stringify(error));
+               }
+
+            };
+            //chart bieu do luan giai hiển thị trên desktop
+            if ($("#chart-explain").length) {
+               createChartExplain();
+            }
+            //chart bieu do luan giai hiển thị trên mobile
+            if ($("#chart-explain-mobile").length) {
+               createChartExplainMobile();
+            }
+         }
+      }
+
+   </script>
+</body>
+
+</html>

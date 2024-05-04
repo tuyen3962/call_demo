@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chart Example</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <canvas id="myChart"></canvas>
+    <script>
+        var myChart;
+        function createChart(data) {
+            const ctx = document.getElementById('myChart').getContext('2d');
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: data,
+                options: {}
+            });
+        }
+
+        function updateChart(newData) {
+	console.log(newData);
+            myChart.data = newData;
+            myChart.update();
+        }
+    </script>
+</body>
+</html>
