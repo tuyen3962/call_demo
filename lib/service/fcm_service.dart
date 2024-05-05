@@ -10,15 +10,13 @@ class FcmService {
 
   static final FcmService instance = FcmService._();
 
-  void pushCallKitNotification(String roomId, {String? receiverToken}) {
-    pushNotification(
-        receiverToken: receiverToken,
-        action: NOTIFICATION_ACTION.VIDEO_CALL,
-        data: {
-          "roomId": roomId,
-          "sender_id": userId,
-          "sender_token": locator.get<NotificationService>().fcmToken
-        });
+  void pushCallKitNotification(String roomId,
+      {String? receiverToken, String action = NOTIFICATION_ACTION.VIDEO_CALL}) {
+    pushNotification(receiverToken: receiverToken, action: action, data: {
+      "roomId": roomId,
+      "sender_id": userId,
+      "sender_token": locator.get<NotificationService>().fcmToken
+    });
   }
 
   Future<void> pushNotification({

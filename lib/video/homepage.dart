@@ -8,7 +8,9 @@ import 'package:flutter_webrtc/flutter_webrtc.dart';
 
 class HomePage extends StatefulWidget {
   final String userType;
-  const HomePage({Key? key, required this.userType}) : super(key: key);
+  final String roomId;
+  const HomePage({Key? key, required this.userType, this.roomId = ''})
+      : super(key: key);
   @override
   HomePageState createState() => HomePageState();
 }
@@ -62,7 +64,8 @@ class HomePageState extends State<HomePage> {
       signaling.openUserMedia(_localRenderer, _remoteRenderer);
       print(
           '---------------------------------------------------------------------------4');
-      //signaling.getData();
+      signaling.joinRoom(widget.roomId, _remoteRenderer);
+      // signaling.getData();
     }
     signaling.onAddRemoteStream = ((stream) {
       _remoteRenderer.srcObject = stream;
@@ -80,11 +83,11 @@ class HomePageState extends State<HomePage> {
     super.initState();
   }
 
-  void startLocalStreaming() {
-    _localRenderer.initialize();
-    _remoteRenderer.initialize();
-    signaling.openUserMedia(_localRenderer, _remoteRenderer);
-  }
+  // void startLocalStreaming() {
+  //   _localRenderer.initialize();
+  //   _remoteRenderer.initialize();
+  //   signaling.openUserMedia(_localRenderer, _remoteRenderer);
+  // }
 
   @override
   void dispose() {
@@ -294,8 +297,16 @@ class HomePageState extends State<HomePage> {
               child: Column(
                 children: [
                   InkWell(
-                    onTap: () {
+                    onTap: () async {
                       signaling.hangUp(_localRenderer);
+                      final otherUser = await firebaseDataSource.getOtherUser();
+                      if (otherUser != null) {
+                        FcmService.instance.pushCallKitNotification(
+                            roomId ?? '',
+                            action: NOTIFICATION_ACTION.END_CALL,
+                            receiverToken: otherUser['token']);
+                      }
+                      Navigator.pop(context);
                       setState(() {
                         // hangUpState = true;
                       });

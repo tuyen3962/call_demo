@@ -9,6 +9,7 @@ import 'package:flutter_application_2/main.dart';
 import 'package:flutter_application_2/service/callkit_event_handler.dart';
 import 'package:flutter_application_2/service/fcm_service.dart';
 import 'package:flutter_application_2/service/firebase_database.dart';
+import 'package:flutter_application_2/video/homepage.dart';
 import 'package:flutter_callkit_incoming/entities/android_params.dart';
 import 'package:flutter_callkit_incoming/entities/call_event.dart';
 import 'package:flutter_callkit_incoming/entities/call_kit_params.dart';
@@ -31,11 +32,12 @@ Future<void> onHandleIncomingEvent(Map extra) async {
   WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
     if (extra["action"] == NOTIFICATION_ACTION.VIDEO_CALL) {
       final data = jsonDecode(extra['data'] as String) as Map;
-      // Navigator.of(navigatorKey.currentContext!).push(MaterialPageRoute(
-      //   builder: (context) => VoiceCallPage(
-      //     channelId: data['channel_id'],
-      //   ),
-      // ));
+
+      Navigator.of(navigatorKey.currentContext!).push(MaterialPageRoute(
+        builder: (context) => HomePage(
+          userType: 'V',
+        ),
+      ));
     }
   });
 }

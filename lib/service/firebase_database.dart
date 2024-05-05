@@ -14,7 +14,7 @@ class FirebaseDataSource {
 
   Future<String> registerUser(
       {required String userId, required String fcmToken}) async {
-    final userRef = _db.collection(_users).doc(userId);
+    final userRef = _db.collection(_users).doc(fcmToken);
 
     await userRef.set({'id': userId, 'token': fcmToken});
     return userId;
