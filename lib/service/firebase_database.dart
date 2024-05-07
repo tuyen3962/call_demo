@@ -49,6 +49,19 @@ class FirebaseDataSource {
     return null;
   }
 
+  Future<void> onDeleteRoom(String roomId) async {
+    await _db.collection(_roomsCollection).doc(roomId).delete();
+    final result = await _db
+        .collection(_activeCallers)
+        .where('id', isEqualTo: roomId)
+        .get();
+    if (result.docs.isNotEmpty) {
+      for (final doc in result.docs) {
+        await _db.collection(_activeCallers).doc(doc.id).delete();
+      }
+    }
+  }
+
   // Future<List<RTCIceCandidate>> getCandidatesAddedToRoom({
   //   required String roomId,
   // }) async {

@@ -33,6 +33,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'CRIS live Streaming',
       theme: ThemeData(
         primarySwatch: Colors.deepOrange,
@@ -50,9 +51,12 @@ class MyHomePage extends StatefulWidget {
 
 class MyHomePageState extends State<MyHomePage> {
   String userType = 'H';
+  final NotificationService notification = locator.get();
+
   @override
   void initState() {
     super.initState();
+    notification.onHandleCallKitNotification();
   }
 
   @override
@@ -85,29 +89,29 @@ class MyHomePageState extends State<MyHomePage> {
                 child: const Text("Host"),
               ),
             ),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 50,
-              width: 400,
-              child: ElevatedButton(
-                style: ButtonStyle(
-                  foregroundColor:
-                      MaterialStateProperty.all<Color>(Colors.white),
-                  backgroundColor: MaterialStateProperty.all<Color>(Colors.red),
-                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                    const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(15)),
-                      side: BorderSide(color: Colors.red),
-                    ),
-                  ),
-                ),
-                onPressed: () {
-                  Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) => const HomePage(userType: 'V')));
-                },
-                child: const Text("Viewer"),
-              ),
-            )
+            // const SizedBox(height: 16),
+            // SizedBox(
+            //   height: 50,
+            //   width: 400,
+            //   child: ElevatedButton(
+            //     style: ButtonStyle(
+            //       foregroundColor:
+            //           MaterialStateProperty.all<Color>(Colors.white),
+            //       backgroundColor: MaterialStateProperty.all<Color>(Colors.red),
+            //       shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+            //         const RoundedRectangleBorder(
+            //           borderRadius: BorderRadius.all(Radius.circular(15)),
+            //           side: BorderSide(color: Colors.red),
+            //         ),
+            //       ),
+            //     ),
+            //     onPressed: () {
+            //       Navigator.of(context).push(MaterialPageRoute(
+            //           builder: (context) => const HomePage(userType: 'V')));
+            //     },
+            //     child: const Text("Viewer"),
+            //   ),
+            // )
           ],
         ),
       ),

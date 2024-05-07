@@ -3,13 +3,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_2/main.dart';
 import 'package:flutter_application_2/service/fcm_service.dart';
 import 'package:flutter_application_2/service/firebase_database.dart';
+import 'package:flutter_application_2/service/notification_service.dart';
 import 'package:flutter_application_2/video/signaling.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 
 class HomePage extends StatefulWidget {
   final String userType;
   final String roomId;
-  const HomePage({Key? key, required this.userType, this.roomId = ''})
+  final String senderToken;
+  const HomePage(
+      {Key? key,
+      required this.userType,
+      this.roomId = '',
+      this.senderToken = ''})
       : super(key: key);
   @override
   HomePageState createState() => HomePageState();
@@ -20,6 +26,7 @@ class HomePageState extends State<HomePage> {
   DateTime? compareDate;
   int i = 0;
   final FirebaseDataSource firebaseDataSource = locator.get();
+  final NotificationService notificationService = locator.get();
   //HomePageState(this.userType);
   Signaling signaling = Signaling();
   final RTCVideoRenderer _localRenderer = RTCVideoRenderer();
@@ -28,11 +35,15 @@ class HomePageState extends State<HomePage> {
   MediaStream? stream;
   bool? hangUpState;
   bool isRemoteConnected = false;
-  //TextEditingController textEditingController = TextEditingController(text: '');
   final db = FirebaseFirestore.instance;
+  late String? otherUserFcmToken = widget.senderToken;
 
   @override
   void initState() {
+    notificationService.onRejectCall = (body) async {
+      signaling.hangUp(_localRenderer);
+      Navigator.pop(context);
+    };
     print(
         '---------------------------------------------------------------------------1');
     hangUpState = false;
@@ -54,6 +65,7 @@ class HomePageState extends State<HomePage> {
           if (otherUser != null) {
             FcmService.instance.pushCallKitNotification(roomId ?? '',
                 receiverToken: otherUser['token']);
+            otherUserFcmToken = otherUser['token'];
           }
           print(
               '---------------------------------------------------------------------------3');
@@ -61,10 +73,12 @@ class HomePageState extends State<HomePage> {
         }
       });
     } else if (userType == 'V') {
-      signaling.openUserMedia(_localRenderer, _remoteRenderer);
+      signaling.openUserMedia(_localRenderer, _remoteRenderer).then((val) {
+        signaling.joinRoom(widget.roomId, _remoteRenderer);
+      });
       print(
           '---------------------------------------------------------------------------4');
-      signaling.joinRoom(widget.roomId, _remoteRenderer);
+
       // signaling.getData();
     }
     signaling.onAddRemoteStream = ((stream) {
@@ -91,6 +105,10 @@ class HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
+    if (widget.userType == 'H') {
+      firebaseDataSource.onDeleteRoom(roomId ?? '');
+    }
+    notificationService.onRejectCall = null;
     _localRenderer.dispose();
     _remoteRenderer.dispose();
     super.dispose();
@@ -372,45 +390,45 @@ class HomePageState extends State<HomePage> {
                         height: MediaQuery.of(context).size.height / 4,
                         width: MediaQuery.of(context).size.width / 4,
                         child: RTCVideoView(_localRenderer, mirror: true)),
-                if (userType == 'V')
-                  Column(
-                    children: [
-                      StreamBuilder<QuerySnapshot>(
-                        stream: db.collection('ActiveCallers').snapshots(),
-                        builder: (context, snapshot) {
-                          if (!snapshot.hasData) {
-                            return const Center(
-                              child: CircularProgressIndicator(),
-                            );
-                          } else {
-                            return SizedBox(
-                              height: MediaQuery.of(context).size.height / 2,
-                              width: MediaQuery.of(context).size.width / 2,
-                              child: ListView(
-                                children: snapshot.data!.docs.map((doc) {
-                                  return Card(
-                                    child: ListTile(
-                                      onTap: () {
-                                        // print(doc.get('id'));
-                                        signaling.joinRoom(
-                                            doc.get('id'), _remoteRenderer);
-                                        setState(() {});
-                                      },
-                                      tileColor: Colors.white70,
-                                      leading: const Icon(Icons.perm_identity),
-                                      title: Text(doc.get('name')),
-                                      trailing: const Icon(Icons.call,
-                                          color: Colors.green),
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
-                            );
-                          }
-                        },
-                      ),
-                    ],
-                  )
+                // if (userType == 'V')
+                //   Column(
+                //     children: [
+                //       StreamBuilder<QuerySnapshot>(
+                //         stream: db.collection('ActiveCallers').snapshots(),
+                //         builder: (context, snapshot) {
+                //           if (!snapshot.hasData) {
+                //             return const Center(
+                //               child: CircularProgressIndicator(),
+                //             );
+                //           } else {
+                //             return SizedBox(
+                //               height: MediaQuery.of(context).size.height / 2,
+                //               width: MediaQuery.of(context).size.width / 2,
+                //               child: ListView(
+                //                 children: snapshot.data!.docs.map((doc) {
+                //                   return Card(
+                //                     child: ListTile(
+                //                       onTap: () {
+                //                         // print(doc.get('id'));
+                //                         signaling.joinRoom(
+                //                             doc.get('id'), _remoteRenderer);
+                //                         setState(() {});
+                //                       },
+                //                       tileColor: Colors.white70,
+                //                       leading: const Icon(Icons.perm_identity),
+                //                       title: Text(doc.get('name')),
+                //                       trailing: const Icon(Icons.call,
+                //                           color: Colors.green),
+                //                     ),
+                //                   );
+                //                 }).toList(),
+                //               ),
+                //             );
+                //           }
+                //         },
+                //       ),
+                //     ],
+                //   )
               ],
             ),
           ],

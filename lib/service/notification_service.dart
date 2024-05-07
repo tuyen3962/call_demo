@@ -17,12 +17,11 @@ import 'package:flutter_callkit_incoming/entities/ios_params.dart';
 import 'package:flutter_callkit_incoming/entities/notification_params.dart';
 import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
 
-void Function(Map body)? onRejectCall;
-
 @pragma('vm:entry-point')
 Future<void> backgroundHandler(RemoteMessage message) async {
-  CallkitEventHandler.registerEvent();
-  if (message.data['action'] == NOTIFICATION_ACTION.VIDEO_CALL) {
+  CallkitEventHandler.registerEvent(isBackground: true);
+  final action = message.data['action'] ?? '';
+  if (action == NOTIFICATION_ACTION.VIDEO_CALL) {
     await NotificationService.showCallkitIncoming(message);
   }
 }
@@ -36,6 +35,8 @@ Future<void> onHandleIncomingEvent(Map extra) async {
       Navigator.of(navigatorKey.currentContext!).push(MaterialPageRoute(
         builder: (context) => HomePage(
           userType: 'V',
+          roomId: data['roomId'],
+          senderToken: data['sender_token'],
         ),
       ));
     }
@@ -45,20 +46,14 @@ Future<void> onHandleIncomingEvent(Map extra) async {
 void onHandleDeclineCallEvent(CallEvent event) async {
   /// Xử lý cuộc gọi tới đã từ bỏ
   final extra = event.body['extra'] as Map;
-  print('onHandleDeclineCallEvent 1');
   if (extra["action"] == NOTIFICATION_ACTION.VIDEO_CALL) {
-    print('onHandleDeclineCallEvent 2');
     final data = jsonDecode(extra['data'] as String) as Map;
     final senderToken = data['sender_token'];
-    print('onHandleDeclineCallEvent 3');
     if (senderToken != null) {
-      print('onHandleDeclineCallEvent 4');
-      print('channel id ${data['channel_id']}');
       await FcmService.instance.pushNotification(
           receiverToken: senderToken,
           action: NOTIFICATION_ACTION.END_CALL,
-          data: {'channel_id': data['channel_id']});
-      print('onHandleDeclineCallEvent 5');
+          data: {'roomId': data['roomId']});
     }
   }
 }
@@ -68,6 +63,8 @@ class NotificationService {
   final FirebaseDataSource firebaseDataSource;
   String? fcmToken;
 
+  void Function(Map body)? onRejectCall;
+
   NotificationService({required this.firebaseDataSource});
 
   Future<void> onHandleCallKitNotification() async {
@@ -75,6 +72,7 @@ class NotificationService {
 
     /// Xử lý cuộc gọi tới khi người dùng có thể chấp nhận cuộc gọi ở trạng thái kill app
     final callData = await FlutterCallkitIncoming.activeCalls();
+    print('onHandleCallKitNotification $callData');
     if (callData == null) return;
     if (callData is List) {
       if (callData.isEmpty) return;
@@ -146,8 +144,8 @@ class NotificationService {
   static Future<void> showCallkitIncoming(RemoteMessage message) async {
     final params = CallKitParams(
       id: message.messageId,
-      nameCaller: message.notification?.title,
-      appName: 'IOT Elevator',
+      nameCaller: 'Cuộc gọi tới',
+      appName: 'DEMO',
       handle: '',
       type: 0,
       duration: 30000,

@@ -49,5 +49,11 @@
 	<string>$(PRODUCT_NAME) Camera Usage!</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>$(PRODUCT_NAME) Microphone Usage!</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>voip</string>
+		<string>remote-notification</string>
+		<string>processing</string> //you can add this if needed
+	</array>
 </dict>
 </plist>

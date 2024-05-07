@@ -229,6 +229,10 @@ class Signaling {
     }
   }
 
+  Future<void> onDeleteRoom(String roomId) async {
+    firebaseDataSource.onDeleteRoom(roomId);
+  }
+
   Future<void> openUserMedia(
     RTCVideoRenderer localVideo,
     RTCVideoRenderer remoteVideo,
